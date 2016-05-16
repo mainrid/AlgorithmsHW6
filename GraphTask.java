@@ -17,31 +17,34 @@ public class GraphTask {
 			}
 			System.out.println();
 		}
-		
 
 		System.out.println(g);
 
-		//testing findPath method
-		//test 1
+		// testing findPath method
+		// test 1
 		System.out.println("Testing findPath() method");
-		int[][] testGraphMatrix= {{0, 0, 2}, {3, 0, 5},{3, 1, 0}};
-		boolean ifPathFound = g.findPath(2, 3, testGraphMatrix);
+		int[][] testGraphMatrix = { { 0, 0, 2 }, { 3, 0, 5 }, { 3, 1, 0 } };
+		boolean ifPathFound = g.findPath(1, 2, testGraphMatrix);
 		System.out.println("Test 1. PathFound should be true, actual: " + ifPathFound);
-		//test 2
-		int parentsCounter=0;
+		// test 2
+		int parentsCounter = 0;
 		for (int i = 0; i < g.getVisitedVertex().length; i++) {
-			if (g.getVisitedVertex()[i]==true) {
+			if (g.getVisitedVertex()[i] == true) {
 				parentsCounter++;
 			}
 		}
 		System.out.println("Test 2. In visitedVertex massive all values should be true (3), actual: " + parentsCounter);
-		//test 3
-		boolean parentVertexTest=false;
-		if (g.getParentVertex()[0]==1 && g.getParentVertex()[1]==-1 && g.getParentVertex()[2]==1 ) {
-			parentVertexTest=true;
+		// test 3
+		boolean parentVertexTest = false;
+		if (g.getParentVertex()[0] == 1 && g.getParentVertex()[1] == -1 && g.getParentVertex()[2] == 1) {
+			parentVertexTest = true;
 		}
-		System.out.println("Test 3. If values in parentVertex correct then test result is True, actual result: " + parentVertexTest);
-		
+		System.out.println("Test 3. If values in parentVertex correct then test result is True, actual result: "
+				+ parentVertexTest);
+		//test 4 
+		int maxBandwidth= g.maxBandwidth(2, 3, testGraphMatrix);
+		System.out.println("MaxBandwidth should be 7: actual result " + maxBandwidth);
+
 	}
 
 	class Vertex {
@@ -108,7 +111,7 @@ public class GraphTask {
 		Graph(String s, Vertex v) {
 			id = s;
 			first = v;
-			nextVertex= new LinkedList<Integer>();
+			nextVertex = new LinkedList<Integer>();
 		}
 
 		Graph(String s) {
@@ -223,11 +226,11 @@ public class GraphTask {
 				throw new IllegalArgumentException("Too many vertices: " + n);
 			if (m < n - 1 || m > n * (n - 1) / 2)
 				throw new IllegalArgumentException("Impossible number of edges: " + m);
-			
-			//initializing variables needed for findPath() method
-			this.parentVertex= new int[n];
-			this.visitedVertex=new boolean[n];
-			
+
+			// initializing variables needed for findPath() method
+			this.parentVertex = new int[n];
+			this.visitedVertex = new boolean[n];
+
 			first = null;
 			createRandomTree(n); // n-1 edges created here
 			Vertex[] vert = new Vertex[n];
@@ -258,60 +261,93 @@ public class GraphTask {
 		}
 
 		// TODO!!! Your Graph methods here!
-		
-		public boolean[] getVisitedVertex(){
+
+		public boolean[] getVisitedVertex() {
 			return this.visitedVertex;
 		}
-		
-		public int[] getParentVertex(){
+
+		public int[] getParentVertex() {
 			return this.parentVertex;
 		}
-		
-		public int FordFulkerson(int source, int target, int[][] graphMatrix){
-			int[][] residualGraphMatrix= new int[graphMatrix.length][graphMatrix.length];
-			
-			for (int i = 0; i < residualGraphMatrix.length; i++) {
-				for (int j = 0; j < residualGraphMatrix.length; j++) {
-					residualGraphMatrix[i][j]= graphMatrix[i][j];
-				}
-			}
-			return 1;
-		}
-		
-		public boolean findPath(int source, int target, int[][] graphMatrix){
-			if (source<1 || source>graphMatrix.length) {
-				throw new IllegalArgumentException("Incorrect argument: " + source);
-			}
-			
-			if (target<1 || target>graphMatrix.length) {
-				throw new IllegalArgumentException("Incorrect argument: " + target);
-			}
+
+		public int maxBandwidth(int source, int target, int[][] graphMatrix) {
 			
 			source=source-1;
 			target=target-1;
 			
-			for (int i = 0; i < graphMatrix.length; i++) {
-				this.visitedVertex[i]=false;
-				this.parentVertex[i]=-1;
+			int[][] residualGraphMatrix = new int[graphMatrix.length][graphMatrix.length];
+
+			for (int i = 0; i < residualGraphMatrix.length; i++) {
+				for (int j = 0; j < residualGraphMatrix.length; j++) {
+					residualGraphMatrix[i][j] = graphMatrix[i][j];
+				}
 			}
-			
-			this.nextVertex.add(source);						
-			visitedVertex[source]=true;
+
+			int pathFlow;
+			int vertexHolder;
+			int parentV;
+			int maxBandwidth=0;
+
+			while (findPath(source, target, residualGraphMatrix) == true) {
+				pathFlow = 500000;
+				System.out.println("While");
+				for (vertexHolder = target; vertexHolder != source; vertexHolder = parentVertex[vertexHolder]) {
 					
-			while(!this.nextVertex.isEmpty()){
-				int sourceVertex=nextVertex.remove();
+					System.out.println("vertexHolder " + vertexHolder +" !=" + source);
+					
+					parentV = parentVertex[vertexHolder];
+					
+					System.out.println("parentV: " + parentV);
+
+					pathFlow = Math.min(pathFlow, residualGraphMatrix[parentV][vertexHolder]);
+					System.out.println("pathFlow: " + pathFlow);
+				}
+
+				for (vertexHolder = target; vertexHolder != source; vertexHolder = parentVertex[vertexHolder]) {
+					parentV = parentVertex[vertexHolder];
+					
+					residualGraphMatrix[parentV][vertexHolder] -= pathFlow;
+					residualGraphMatrix[vertexHolder][parentV] += pathFlow;
+				}
 				
+				maxBandwidth+=pathFlow;
+			}
+
+			return maxBandwidth;
+		}
+
+		private boolean findPath(int source, int target, int[][] graphMatrix) {
+			if (source < 0 || source >= graphMatrix.length) {
+				throw new IllegalArgumentException("Incorrect argument: " + source);
+			}
+
+			if (target < 1 || target >= graphMatrix.length) {
+				throw new IllegalArgumentException("Incorrect argument: " + target);
+			}
+
+
+			for (int i = 0; i < graphMatrix.length; i++) {
+				this.visitedVertex[i] = false;
+				this.parentVertex[i] = -1;
+			}
+
+			this.nextVertex.add(source);
+			visitedVertex[source] = true;
+
+			while (!this.nextVertex.isEmpty()) {
+				int sourceVertex = nextVertex.remove();
+
 				for (int targetVertex = 0; targetVertex < graphMatrix.length; targetVertex++) {
-					if (graphMatrix[sourceVertex][targetVertex]>0 && !visitedVertex[targetVertex]) {
+
+					if (graphMatrix[sourceVertex][targetVertex] > 0 && !visitedVertex[targetVertex]) {
 						nextVertex.add(targetVertex);
-						this.parentVertex[targetVertex]=sourceVertex;
-						this.visitedVertex[targetVertex]=true;
+						this.parentVertex[targetVertex] = sourceVertex;
+						this.visitedVertex[targetVertex] = true;
 					}
 				}
 			}
-			
-			
-			if(visitedVertex[target]=true){
+
+			if (visitedVertex[target]) {
 				return true;
 			}
 			return false;
