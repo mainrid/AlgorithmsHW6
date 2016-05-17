@@ -5,19 +5,19 @@ public class GraphTask {
 	public static void main(String[] args) {
 		GraphTask a = new GraphTask();
 		a.run();
-		throw new RuntimeException("Nothing implemented yet!"); // delete this
 	}
 
 	public void run() {
+		@SuppressWarnings("resource")
 		Scanner reader = new Scanner(System.in);
 
 		Graph g = new Graph("G");
 
 		System.out.println("If you want to find max bandwidth of a path for your own telephone network, type 1");
 		System.out.println("If you want to find max bandwidth of a path for random telephone network type 2");
-		
 
 		while (true) {
+			
 			int n = reader.nextInt();
 			if (n == 1) {
 				System.out.println("Enter the number of switching centers");
@@ -27,10 +27,16 @@ public class GraphTask {
 				System.out.println("Enter the bandwidth of the lines: ");
 				for (int i = 0; i < graph.length; i++) {
 					for (int j = 0; j < graph.length; j++) {
-						graph[i][j] = reader.nextInt();
+						int input = reader.nextInt();
+						if (input < 0) {
+							throw new IllegalArgumentException(
+									"Incorrect input: " + input + ". Line bandwidth can't be <0");
+						} else {
+							graph[i][j] = input;
+						}
 					}
 				}
-				
+
 				System.out.println("Your graph matrix: ");
 				System.out.println();
 				for (int i = 0; i < graph.length; i++) {
@@ -56,7 +62,7 @@ public class GraphTask {
 				int numberOfLines = reader.nextInt();
 
 				int[][] graph = g.createRandomSimpleGraph(numberOfVertices, numberOfLines);
-				
+
 				System.out.println("Graph Matrix generated: ");
 				System.out.println();
 				for (int i = 0; i < graph.length; i++) {
@@ -75,54 +81,15 @@ public class GraphTask {
 
 				System.out.println(
 						"Max bandwidth of a path from " + source + " to sink: " + target + " is " + maxBandwidth);
-
 			} else {
 				System.out.println("Please enter 1 or 2");
 			}
+
 		}
 
-		// int[][] matrix = g.createRandomSimpleGraph(6, 9);
-		// for (int i = 0; i < matrix.length; i++) {
-		// for (int j = 0; j < matrix.length; j++) {
-		// System.out.print(matrix[i][j] + " ");
-		// }
-		// System.out.println();
-		// }
-		//
-		// System.out.println(g);
-		//
-		// // testing findPath method
-		// // test 1
-		// System.out.println("Testing findPath() method");
-		// int[][] testGraphMatrix = { { 0, 0, 2 }, { 3, 0, 5 }, { 3, 1, 0 } };
-		// boolean ifPathFound = g.findPath(1, 2, testGraphMatrix);
-		// System.out.println("Test 1. PathFound should be true, actual: " +
-		// ifPathFound);
-		// // test 2
-		// int parentsCounter = 0;
-		// for (int i = 0; i < g.getVisitedVertex().length; i++) {
-		// if (g.getVisitedVertex()[i] == true) {
-		// parentsCounter++;
-		// }
-		// }
-		// System.out.println("Test 2. In visitedVertex massive all values
-		// should be true (3), actual: " + parentsCounter);
-		// // test 3
-		// boolean parentVertexTest = false;
-		// if (g.getParentVertex()[0] == 1 && g.getParentVertex()[1] == -1 &&
-		// g.getParentVertex()[2] == 1) {
-		// parentVertexTest = true;
-		// }
-		// System.out.println("Test 3. If values in parentVertex correct then
-		// test result is True, actual result: "
-		// + parentVertexTest);
-		// //test 4
-		// int maxBandwidth= g.maxBandwidth(2, 3, testGraphMatrix);
-		// System.out.println("MaxBandwidth should be 7: actual result " +
-		// maxBandwidth);
-
+		
 	}
-
+	
 	class Vertex {
 
 		private String id;
@@ -175,7 +142,7 @@ public class GraphTask {
 		// TODO!!! Your Arc methods here!
 	}
 
-	class Graph {
+	public class Graph {
 
 		private String id;
 		private Vertex first;
@@ -294,6 +261,7 @@ public class GraphTask {
 		 *            number of vertices
 		 * @param m
 		 *            number of edges
+		 * @return random matrix           
 		 */
 		public int[][] createRandomSimpleGraph(int n, int m) {
 			if (n <= 0)
@@ -338,19 +306,29 @@ public class GraphTask {
 
 		// TODO!!! Your Graph methods here!
 
-		public boolean[] getVisitedVertex() {
-			return this.visitedVertex;
-		}
-
-		public int[] getParentVertex() {
-			return this.parentVertex;
-		}
-
+		
+		/**
+		 * Finds the maximum bandwidth of a path between a and b in a telephone network.
+		 * represented as a graph.
+		 * 
+		 * @param source
+		 *            source switching center
+		 * @param target
+		 *            target switching center
+		 *  @param graphMatrix
+		 *            graph (representation of telephone network)          
+		 *            
+		 * @return maximum bandwidth          
+		 */
 		public int maxBandwidth(int source, int target, int[][] graphMatrix) {
 			if (source == target) {
 				return 0;
 			}
-
+			
+			if(graphMatrix.length==0){
+				throw new IllegalArgumentException("Empty matrix is passed as an argument");
+			}
+			
 			this.parentVertex = new int[graphMatrix.length];
 			this.visitedVertex = new boolean[graphMatrix.length];
 
@@ -361,7 +339,12 @@ public class GraphTask {
 
 			for (int i = 0; i < residualGraphMatrix.length; i++) {
 				for (int j = 0; j < residualGraphMatrix.length; j++) {
-					residualGraphMatrix[i][j] = graphMatrix[i][j];
+					if (graphMatrix[i][j]>-1) {
+						residualGraphMatrix[i][j] = graphMatrix[i][j];
+					}else{
+						throw new IllegalArgumentException("Line bandwidth can't be <0, actual " + graphMatrix[i][j]);
+					}
+					
 				}
 			}
 
@@ -391,14 +374,26 @@ public class GraphTask {
 
 			return maxBandwidth;
 		}
-
+		
+		/**
+		 * Finds path from source to target in graphMatrix
+		 * 
+		 * @param source
+		 *            source switching center
+		 * @param target
+		 *            target switching center
+		 *  @param graphMatrix
+		 *            graph (representation of telephone network)          
+		 *            
+		 * @return true, if source is found        
+		 */
 		private boolean findPath(int source, int target, int[][] graphMatrix) {
 			if (source < 0 || source >= graphMatrix.length) {
-				throw new IllegalArgumentException("Incorrect input: " + (source+1));
+				throw new IllegalArgumentException("Incorrect input: " + (source + 1));
 			}
 
-			if (target < 1 || target >= graphMatrix.length) {
-				throw new IllegalArgumentException("Incorrect input: " + (target+1));
+			if (target < 0 || target >= graphMatrix.length) {
+				throw new IllegalArgumentException("Incorrect input: " + (target + 1));
 			}
 
 			for (int i = 0; i < graphMatrix.length; i++) {
